@@ -1,0 +1,33 @@
+name: Build DS21 firmware
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      QMK_HOME: ${{ github.workspace }}/qmk_firmware
+    steps:
+      - name: 下载我的文件
+        uses: actions/checkout@v4
+      - name: 下载QMK源码
+        uses: actions/checkout@v4
+        with:
+          repository: qmk/qmk_firmware
+          ref: 0.22.14
+          path: qmk_firmware
+          submodules: recursive
+          fetch-depth: 1
+      - name: 安装编译环境
+        run: |
+          pip install qmk
+          qmk setup -y
+      - name: 放入键盘源码
+        run: cp -r keyboard qmk_firmware/keyboards/mao_b70_ds21_encoder
+      - name: 编译
+        run: qmk compile -kb mao_b70_ds21_encoder -km via
+      - name: 保存固件
+        uses: actions/upload-artifact@v4
+        with:
+          name: ds21_firmware
+          path: |
+            qmk_firmware/*.bin
+            qmk_firmware/*.hex
