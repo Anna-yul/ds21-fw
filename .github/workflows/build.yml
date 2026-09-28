@@ -19,6 +19,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
           pip install qmk
+          pip install -r qmk_firmware/requirements.txt
       - name: 放入键盘源码
         run: cp -r keyboard qmk_firmware/keyboards/mao_b70_ds21_encoder
       - name: 编译
