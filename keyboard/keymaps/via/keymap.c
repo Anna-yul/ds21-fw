@@ -132,7 +132,7 @@ void matrix_scan_user(void) {
             }
             break;
         case 4:
-            if (timer_elapsed(rpt_timer) >= 775) {
+            if (timer_elapsed(rpt_timer) >= 575) {
                 register_code(KC_LALT);
                 rpt_timer = timer_read();
                 rpt_phase = 1;
