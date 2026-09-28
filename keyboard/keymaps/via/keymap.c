@@ -22,26 +22,16 @@ enum custom_keycodes {
     KC_RPTH = QK_KB_1,   // 循环宏 按住：按住循环，松开停止
 };
 
-// Each layer gets a name for readability, which is then used in the keymap matrix below.
-// The underscores don't mean anything - you can have a layer called STUFF or any other name.
-// Layer names don't all need to be of the same length, obviously, and you can also skip them
-// entirely and just use numbers.
-
-// enum custom_keycodes {
-//   QWERTY = SAFE_RANGE,
-//   LOWER,
-//   RAISE
-// };
-
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
+    // ========== 层 0（日常层）：按你的初始键位烘入 ==========
     [0] = LAYOUT(
-        KC_ESC,         KC_CALC,        KC_MPLY,        KC_BSPC,    KC_MUTE,
+        KC_DEL,         KC_PGUP,        KC_MPRV,        KC_NO,      KC_VOLD,
 
         LT(1,KC_NUM),   LT(2,KC_PSLS),  LT(3,KC_PAST),  LT(4,KC_PMNS),
-        KC_P7,          KC_P8,          KC_P9,
+        KC_RPTT,        KC_P8,          KC_P9,
         KC_P4,          KC_P5,          KC_P6,          KC_PPLS,
         KC_P1,          KC_P2,          KC_P3,          KC_PENT,
-        KC_P0,                          KC_PDOT,
+        KC_RPTH,                        KC_PDOT,
 
         KC_DEL,         KC_BSPC,        KC_PGUP,        KC_PGDN,
         KC_MPRV,        KC_MNXT,        KC_VOLD,        KC_VOLU
@@ -82,62 +72,38 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
-    // caps lock cyan
-
-    // num lock cyan
     if (host_keyboard_led_state().num_lock) {
         RGB_MATRIX_INDICATOR_SET_COLOR(5, 255, 255, 255);
     }
-
-
-
-    // layer state
     switch (get_highest_layer(layer_state)) {
-        case 1:
-            RGB_MATRIX_INDICATOR_SET_COLOR(16, 255, 255, 255);
-            break;
-        case 2:
-            RGB_MATRIX_INDICATOR_SET_COLOR(17, 255, 255, 255);
-            break;
-        case 3:
-            RGB_MATRIX_INDICATOR_SET_COLOR(18, 255, 255, 255);
-            break;
-        case 4:
-            RGB_MATRIX_INDICATOR_SET_COLOR(13, 255, 255, 255);
-            break;
-        case 5:
-            RGB_MATRIX_INDICATOR_SET_COLOR(14, 255, 255, 255);
-            break;
-        case 6:
-            RGB_MATRIX_INDICATOR_SET_COLOR(15, 255, 255, 255);
-            break;
-        case 7:
-            RGB_MATRIX_INDICATOR_SET_COLOR(9, 255, 255, 255);
-            break;
-
+        case 1: RGB_MATRIX_INDICATOR_SET_COLOR(16, 255, 255, 255); break;
+        case 2: RGB_MATRIX_INDICATOR_SET_COLOR(17, 255, 255, 255); break;
+        case 3: RGB_MATRIX_INDICATOR_SET_COLOR(18, 255, 255, 255); break;
+        case 4: RGB_MATRIX_INDICATOR_SET_COLOR(13, 255, 255, 255); break;
+        case 5: RGB_MATRIX_INDICATOR_SET_COLOR(14, 255, 255, 255); break;
+        case 6: RGB_MATRIX_INDICATOR_SET_COLOR(15, 255, 255, 255); break;
+        case 7: RGB_MATRIX_INDICATOR_SET_COLOR(9, 255, 255, 255); break;
     }
     return false;
 }
 
 // ================== 循环宏功能 ==================
 // 宏序列：按下Alt → 79ms → 按下Ctrl → 56ms → 抬起Alt → 65ms → 抬起Ctrl → 775ms → 循环
-// 用状态机实现，循环期间不阻塞其他按键
-
 static bool     rpt_on    = false;
-static uint8_t  rpt_phase = 0;      // 0=停止，1~4=宏的第几步
+static uint8_t  rpt_phase = 0;
 static uint16_t rpt_timer = 0;
 
 static void rpt_begin(void) {
     rpt_on    = true;
     rpt_phase = 1;
-    register_code(KC_LALT);         // 第1步：按下 Alt
+    register_code(KC_LALT);
     rpt_timer = timer_read();
 }
 
 static void rpt_stop(void) {
     rpt_on    = false;
     rpt_phase = 0;
-    unregister_code(KC_LALT);       // 保险：全部松开，防止卡键
+    unregister_code(KC_LALT);
     unregister_code(KC_LCTL);
 }
 
@@ -145,28 +111,28 @@ void matrix_scan_user(void) {
     if (rpt_phase == 0) return;
     switch (rpt_phase) {
         case 1:
-            if (timer_elapsed(rpt_timer) >= 79) {   // Alt 按下79ms后
-                register_code(KC_LCTL);             // 第2步：按下 Ctrl
+            if (timer_elapsed(rpt_timer) >= 79) {
+                register_code(KC_LCTL);
                 rpt_timer = timer_read();
                 rpt_phase = 2;
             }
             break;
         case 2:
-            if (timer_elapsed(rpt_timer) >= 56) {   // 56ms后
-                unregister_code(KC_LALT);           // 第3步：抬起 Alt
+            if (timer_elapsed(rpt_timer) >= 56) {
+                unregister_code(KC_LALT);
                 rpt_timer = timer_read();
                 rpt_phase = 3;
             }
             break;
         case 3:
-            if (timer_elapsed(rpt_timer) >= 65) {   // 65ms后
-                unregister_code(KC_LCTL);           // 第4步：抬起 Ctrl
+            if (timer_elapsed(rpt_timer) >= 65) {
+                unregister_code(KC_LCTL);
                 rpt_timer = timer_read();
                 rpt_phase = 4;
             }
             break;
         case 4:
-            if (timer_elapsed(rpt_timer) >= 775) {  // 775ms后从头再来
+            if (timer_elapsed(rpt_timer) >= 775) {
                 register_code(KC_LALT);
                 rpt_timer = timer_read();
                 rpt_phase = 1;
@@ -177,12 +143,12 @@ void matrix_scan_user(void) {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        case KC_RPTT:                            // 开关式
+        case KC_RPTT:
             if (record->event.pressed) {
                 if (rpt_on) rpt_stop(); else rpt_begin();
             }
             return false;
-        case KC_RPTH:                            // 按住式
+        case KC_RPTH:
             if (record->event.pressed) rpt_begin();
             else                       rpt_stop();
             return false;
